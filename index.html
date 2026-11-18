@@ -114,7 +114,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .buddy img{width:68px;height:68px;object-fit:contain;flex:0 0 auto}
 .buddy p{margin:0;font-size:15px;line-height:1.45;min-width:0}
 .toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:30;
-  background:var(--ink);color:var(--bg);border-radius:999px;padding:6px 18px 6px 6px;white-space:nowrap;display:flex;align-items:center;gap:8px;font-weight:500;box-shadow:0 6px 20px rgba(0,0,0,.2)}
+  background:var(--ink);color:var(--bg);border-radius:999px;padding:6px 18px 6px 6px;width:max-content;max-width:calc(100% - 32px);display:flex;align-items:center;gap:8px;font-weight:500;box-shadow:0 6px 20px rgba(0,0,0,.2)}
 .toast img{width:44px;height:44px;object-fit:contain}
 @media (prefers-reduced-motion:no-preference){.toast{animation:pop .25s ease-out}@keyframes pop{from{transform:translate(-50%,12px);opacity:0}}}
 .note{font-size:12px;color:var(--muted);text-align:center}
@@ -147,6 +147,22 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .datebox .cal{font-size:12px;color:var(--accent)}
 .datebox input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0}
 .slip{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.inboxbar{display:flex;align-items:center;gap:10px;width:100%;border:1px solid var(--accent);background:var(--card);color:var(--ink);border-radius:14px;padding:10px 14px;font-weight:500;text-align:left}
+.inboxbar .n{background:var(--out);color:#fff;border-radius:999px;min-width:26px;height:26px;display:grid;place-items:center;font-size:14px;padding:0 6px}
+.inboxbar .go{margin-left:auto;color:var(--accent);font-size:14px}
+.ibx{display:flex;flex-direction:column;gap:8px}
+.ibx-item{border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;background:var(--bg)}
+.ibx-top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.ibx-top b{font-size:18px}
+.ibx-item small{color:var(--muted)}
+.ibx-warn{font-size:13px;color:var(--out)}
+.ibx-act{display:flex;gap:8px}
+.ibx-act button{flex:1;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px}
+.ibx-act .go{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.ibx-act .arm{background:var(--out);color:#fff;border-color:var(--out)}
+.repeat{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.repeat select{max-width:220px}
+.rep-mark{font-size:12px;margin-left:4px}
 .smsbox{display:flex;flex-direction:column;gap:6px}
 .smsbox textarea{min-height:84px;resize:vertical;font:inherit;font-size:15px}
 .bankrow{display:grid;grid-template-columns:1fr 1.3fr;gap:8px;align-items:center;font-size:14px}
@@ -228,6 +244,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
       <button class="gear" id="gear" aria-label="ตั้งค่ากระเป๋า"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg></button>
     </div>
   </div>
+  <button type="button" class="inboxbar" id="inboxBar" hidden></button>
   <div class="tabs" id="tabs" role="tablist"></div>
   <div id="main"></div>
   <p class="note" id="where">กำลังเชื่อมต่อที่เก็บข้อมูล…</p>
@@ -255,9 +272,24 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     <label class="field"><span>รายการ (เป็นค่าอะไร)</span>
       <input class="txt" id="fNote" placeholder="เช่น ถ่ายเอกสารใบงาน ป.3" autocomplete="off" required></label>
     <label class="field"><span>วันที่</span><input class="txt" type="date" id="fDate"></label>
+    <div class="repeat" id="repWrap">
+      <label class="check"><input type="checkbox" id="fRep"> 🔁 จดซ้ำทุกเดือน</label>
+      <label class="field" id="repUntilWrap" hidden><span>จนถึงเดือน</span><select class="txt" id="fRepUntil"></select></label>
+      <div class="sublabel" id="repInfo"></div>
+    </div>
+    <button type="button" class="mini danger" id="serDel" hidden style="align-self:flex-start"></button>
     <div class="err" id="fErr"></div>
     <div class="actions"><button type="button" id="cancel">ยกเลิก</button><button type="submit" class="save">บันทึก</button></div>
   </form>
+</div>
+
+<div class="sheet" id="inboxSheet" hidden role="dialog" aria-modal="true" aria-labelledby="inboxTitle">
+  <div class="inner">
+    <div class="brand"><img data-img="bag" alt="" style="border-radius:0;object-fit:contain"><h2 id="inboxTitle">กล่องรอจด</h2></div>
+    <p class="sublabel" style="margin:0">รายการจาก SMS ธนาคารที่ยังไม่ได้จด แตะ "จด" เพื่อเลือกหมวดแล้วบันทึก หรือ "ทิ้ง" ถ้าไม่ต้องการ</p>
+    <div class="ibx" id="ibxList"></div>
+    <div class="actions"><button type="button" id="ibxClose">ปิด ไว้จดทีหลัง</button></div>
+  </div>
 </div>
 
 <div class="sheet" id="searchSheet" hidden role="dialog" aria-modal="true" aria-labelledby="searchTitle">
@@ -345,7 +377,7 @@ let form={wallet:'personal',type:'out',cat:null,extraCat:null};
 
 /* ---------- storage: private per-person db, else this browser ---------- */
 let store=null;
-const LS='kraopao-tx',LSW='nrr-wallets',SETID='_settings',LSB='nrr-banks',LSSEEN='nrr-sms-seen';
+const LS='kraopao-tx',LSW='nrr-wallets',SETID='_settings',LSB='nrr-banks',LSSEEN='nrr-sms-seen',LSIN='nrr-inbox';
 const BANKS=[{id:'bbl',name:'กรุงเทพ'},{id:'ttb',name:'ทหารไทย (ttb)'},{id:'scb',name:'ไทยพาณิชย์'},{id:'kbank',name:'กสิกรไทย'},{id:'ktb',name:'กรุงไทย'},{id:'other',name:'ธนาคารอื่น'}];
 function lsGet(k,d){try{return JSON.parse(localStorage.getItem(k)||'null')??d}catch(e){return d}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
@@ -419,7 +451,7 @@ function listHtml(list,showWallet){
     ${items.map(t=>{const w=W(t.wallet);const catName=t.type==='in'?'รายรับ':t.cat;const sub=[showWallet?w.name:'',t.note?catName:''].filter(Boolean).join(' · ');
       const bar=t.type==='in'?'--in':catColor(w,t.cat);
       return `<div class="row" data-edit="${esc(t.id)}"><span class="bar" style="background:var(${bar})"></span>
-      <span class="t"><b>${esc(t.note||catName)}</b>${sub?`<small>${esc(sub)}</small>`:''}</span>
+      <span class="t"><b>${esc(t.note||catName)}${t.series?'<span class="rep-mark" title="รายการประจำ">🔁</span>':''}</b>${sub?`<small>${esc(sub)}</small>`:''}</span>
       <span class="amt num ${t.type==='in'?'in':'out'}">${t.type==='in'?'+':'−'}${fmt(t.amount)}</span>
       <button class="del ${state.armed===t.id?'arm':''}" data-del="${esc(t.id)}">${state.armed===t.id?'ยืนยันลบ':'ลบ'}</button></div>`}).join('')}</div>`}).join('');
 }
@@ -518,9 +550,10 @@ function paintForm(){
   $('fCat').innerHTML=cats.map(c=>`<button type="button" data-c="${esc(c)}" aria-pressed="${c===form.cat}">${esc(c)}</button>`).join('');
 }
 function openSheet(){
-  editing=null;form.extraCat=null;$('sheetTitle').textContent='จดรายการใหม่';$('slipRow').hidden=!(canOCR||ask);
+  closeSheets();editing=null;form.extraCat=null;$('sheetTitle').textContent='จดรายการใหม่';$('slipRow').hidden=!(canOCR||ask);
   form.wallet=state.tab==='all'?form.wallet:state.tab;form.cat=null;
   $('fAmount').value='';$('fNote').value='';$('fDate').value=todayStr();$('fDate').min=cutoff();$('slipMsg').textContent=SLIP_HINT;$('fSms').value='';$('fSms').hidden=true;$('smsMsg').textContent='คัดลอก SMS ธนาคาร แล้วกดปุ่มนี้';$('fErr').textContent='';
+  fromInbox=null;$('repWrap').hidden=false;$('fRep').checked=false;$('serDel').hidden=true;paintRepeat();
   paintForm();$('scrim').hidden=false;$('sheet').hidden=false;setTimeout(()=>$('fAmount').focus(),50);
 }
 function openEdit(id){
@@ -530,9 +563,12 @@ function openEdit(id){
   form.extraCat=t.type==='in'?null:{w:t.wallet,c:t.cat};
   $('sheetTitle').textContent='แก้ไขรายการ';$('slipRow').hidden=true;
   $('fAmount').value=t.amount;$('fNote').value=t.note||'';$('fDate').value=t.date||todayStr();$('fDate').min=cutoff();$('fErr').textContent='';
+  fromInbox=null;$('repWrap').hidden=true;$('fRep').checked=false;serArm=false;
+  const rest=t.series?state.txs.filter(x=>x.series===t.series&&x.date>=t.date).length:0;
+  $('serDel').hidden=!t.series;$('serDel').classList.remove('arm');$('serDel').textContent=`🔁 ลบรายการประจำชุดนี้ ตั้งแต่เดือนนี้เป็นต้นไป (${rest} รายการ)`;
   paintForm();$('scrim').hidden=false;$('sheet').hidden=false;
 }
-function closeSheets(){$('scrim').hidden=true;$('sheet').hidden=true;$('setSheet').hidden=true;$('searchSheet').hidden=true}
+function closeSheets(){$('scrim').hidden=true;$('sheet').hidden=true;$('setSheet').hidden=true;$('searchSheet').hidden=true;$('inboxSheet').hidden=true}
 $('fab').onclick=openSheet;$('cancel').onclick=closeSheets;$('scrim').onclick=closeSheets;
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheets()});
 $('fWallet').onclick=e=>{const b=e.target.closest('[data-w]');if(b){form.wallet=b.dataset.w;paintForm()}};
@@ -548,9 +584,17 @@ $('form').addEventListener('submit',async e=>{
   if(!store){$('fErr').textContent='ยังโหลดที่เก็บข้อมูลไม่เสร็จ ลองอีกครั้งในไม่กี่วินาที';return}
   const t={wallet:form.wallet,type:form.type,cat:form.type==='in'?'รายรับ':form.cat,amount:Math.round(amt*100)/100,
     note:$('fNote').value.trim().slice(0,120),date:$('fDate').value||todayStr(),created:editing?(editing.created||Date.now()):Date.now()};
+  const wasEdit=!!editing;let n=1;
   try{
-    if(editing){await store.update(editing.id,t);editing=null}else await store.add(t);
-    state.ym=t.date.slice(0,7);closeSheets();render();toast($('sheetTitle').textContent==='แก้ไขรายการ'?'แก้ไขแล้ว!':'บันทึกแล้ว!')}
+    if(editing){if(editing.series)t.series=editing.series;await store.update(editing.id,t);editing=null}
+    else if($('fRep').checked&&$('fRepUntil').value){
+      const dates=monthlyDates(t.date,$('fRepUntil').value);const sid='s'+Date.now().toString(36);n=dates.length;
+      for(const d of dates)await store.add({...t,date:d,series:sid,created:Date.now()});
+    }else await store.add(t);
+    if(fromInbox){removeInbox(fromInbox);fromInbox=null}
+    state.ym=t.date.slice(0,7);closeSheets();render();
+    toast(wasEdit?'แก้ไขแล้ว!':n>1?`บันทึกแล้ว ${n} เดือน 🔁`:'บันทึกแล้ว!');
+    if(!wasEdit&&inboxList().length)setTimeout(openInbox,700)}
   catch(err){$('fErr').textContent=err&&err.code==='quota_exceeded'?'ที่เก็บข้อมูลเต็ม ลบรายการเก่าบางส่วนก่อน':'บันทึกไม่สำเร็จ ลองกดบันทึกอีกครั้ง'}
 });
 
@@ -810,7 +854,7 @@ function parseBank(raw){
   if(r.date&&(r.date<cutoff()||r.date>todayStr()))r.date='';
   return r;
 }
-function fillFromBank(r,raw){
+function fillFromBank(r,raw,skipSeen){
   if(!r){$('smsMsg').textContent='อ่านข้อความนี้ไม่ออก ลองคัดลอกใหม่ทั้งข้อความ หรือกรอกเองได้เลย';return false}
   const bankName=(BANKS.find(b=>b.id===r.bank)||{}).name||'ธนาคาร';
   const map=lsGet(LSB,{});if(map[r.bank]&&W(map[r.bank]))form.wallet=map[r.bank];
@@ -819,9 +863,10 @@ function fillFromBank(r,raw){
   $('fAmount').value=r.amount;$('fDate').value=r.date||todayStr();$('fNote').value=r.note;
   paintForm();
   let msg=`${bankName}: ${r.type==='in'?'เงินเข้า':'เงินออก'} ฿${fmt(r.amount)} กรอกให้แล้ว `+(r.type==='out'?'เลือกหมวดหมู่ แล้วกดบันทึก':'ตรวจกระเป๋า แล้วกดบันทึก');
-  const seen=lsGet(LSSEEN,[]);const key=String(raw).replace(/\s+/g,' ').trim();
+  const dup=routineDup(r);if(dup)msg=`⚠ เดือนนี้มีรายการประจำ 🔁 "${dup.note}" ฿${fmt(dup.amount)} อยู่แล้ว อาจจดซ้ำ · `+msg;
+  if(!skipSeen){const seen=lsGet(LSSEEN,[]);const key=String(raw).replace(/\s+/g,' ').trim();
   if(seen.includes(key))msg='⚠ ข้อความนี้เคยเปิดมาแล้ว ระวังจดซ้ำ · '+msg;
-  else{seen.push(key);lsSet(LSSEEN,seen.slice(-60))}
+  else{seen.push(key);lsSet(LSSEEN,seen.slice(-60))}}
   $('smsMsg').textContent=msg;return true;
 }
 $('smsBtn').onclick=async()=>{
@@ -831,13 +876,85 @@ $('smsBtn').onclick=async()=>{
 };
 $('fSms').addEventListener('input',()=>{const v=$('fSms').value;if(!v.trim())return;fillFromBank(parseBank(v),v)});
 
+/* ---------- monthly repeat ---------- */
+let fromInbox=null,serArm=false;
+function monthlyDates(start,untilYm){
+  const [y,m,d]=start.split('-').map(Number);const out=[];let yy=y,mm=m;
+  for(let i=0;i<13;i++){const ym=yy+'-'+pad(mm);if(ym>untilYm)break;
+    const last=new Date(yy,mm,0).getDate();out.push(ym+'-'+pad(Math.min(d,last)));mm++;if(mm>12){mm=1;yy++}}
+  return out;
+}
+function thMonth(ym){const [y,m]=ym.split('-').map(Number);return new Date(y,m-1,1).toLocaleDateString('th-TH',{month:'long',year:'numeric'})}
+function paintRepeat(){
+  const on=$('fRep').checked;$('repUntilWrap').hidden=!on;
+  const start=($('fDate').value||todayStr());const [y,m]=start.split('-').map(Number);
+  const prev=$('fRepUntil').value;let opts='';let yy=y,mm=m;
+  for(let i=1;i<=12;i++){mm++;if(mm>12){mm=1;yy++}const ym=yy+'-'+pad(mm);opts+=`<option value="${ym}">${thMonth(ym)}</option>`}
+  $('fRepUntil').innerHTML=opts;if(prev&&$('fRepUntil').querySelector(`option[value="${prev}"]`))$('fRepUntil').value=prev;
+  $('repInfo').textContent=on&&$('fRepUntil').value?`จะสร้าง ${monthlyDates(start,$('fRepUntil').value).length} รายการ เดือนละ 1 รายการ วันที่ ${+start.slice(8)} ของทุกเดือน (เดือนที่ไม่มีวันนี้จะใช้วันสุดท้ายของเดือน)`:'';
+}
+$('fRep').addEventListener('change',paintRepeat);$('fRepUntil').addEventListener('change',paintRepeat);$('fDate').addEventListener('change',paintRepeat);
+$('serDel').onclick=async()=>{
+  if(!editing||!editing.series)return;
+  if(!serArm){serArm=true;$('serDel').classList.add('arm');$('serDel').textContent='กดอีกครั้งเพื่อยืนยันลบ';return}
+  const sid=editing.series,from=editing.date;const ids=state.txs.filter(x=>x.series===sid&&x.date>=from).map(x=>x.id);
+  for(const id of ids){try{await store.del(id)}catch(e){}}
+  editing=null;closeSheets();render();toast(`ลบรายการประจำแล้ว ${ids.length} รายการ`);
+};
+function routineDup(r){
+  if(!r)return null;const ym=(r.date||todayStr()).slice(0,7);
+  return state.txs.find(t=>t.series&&t.type===r.type&&Math.abs(t.amount-r.amount)<0.005&&(t.date||'').slice(0,7)===ym)||null;
+}
+
+/* ---------- inbox (กล่องรอจด) ---------- */
+function inboxList(){return lsGet(LSIN,[])}
+function addInbox(raw){
+  const key=String(raw).replace(/\s+/g,' ').trim();if(!key)return false;
+  const seen=lsGet(LSSEEN,[]);if(seen.includes(key))return false;
+  seen.push(key);lsSet(LSSEEN,seen.slice(-60));
+  const list=inboxList();list.push({id:'i'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),raw:key,at:Date.now(),day:todayStr()});
+  lsSet(LSIN,list.slice(-100));return true;
+}
+function removeInbox(id){lsSet(LSIN,inboxList().filter(x=>x.id!==id));paintInboxBar()}
+function paintInboxBar(){
+  const n=inboxList().length;$('inboxBar').hidden=!n;
+  $('inboxBar').innerHTML=`<span class="n num">${n}</span><span>รายการรอจด จาก SMS ธนาคาร</span><span class="go">ดู ›</span>`;
+}
+let ibxArm=null;
+function openInbox(){closeSheets();ibxArm=null;paintInbox();$('scrim').hidden=false;$('inboxSheet').hidden=false}
+function paintInbox(){
+  const list=inboxList();
+  if(!list.length){$('ibxList').innerHTML='<div class="empty"><img src="${IMG.cheer}" alt=""><span>จดครบหมดแล้ว เก่งมาก!</span></div>'.replace('${IMG.cheer}',IMG.cheer);return}
+  $('ibxList').innerHTML=list.slice().reverse().map(it=>{
+    const r=parseBank(it.raw);const bank=r?((BANKS.find(b=>b.id===r.bank)||{}).name||''):'';
+    const dup=r?routineDup({...r,date:r.date||it.day}):null;
+    const head=r?`<b class="num ${r.type==='in'?'in':'out'}">${r.type==='in'?'+':'−'}฿${fmt(r.amount)}</b><small>${esc(bank)} · ${dmy(r.date||it.day)}</small>`:`<b>อ่านจำนวนเงินไม่ออก</b><small>${dmy(it.day)}</small>`;
+    return `<div class="ibx-item" data-ib="${it.id}"><div class="ibx-top">${head}</div>
+      <small>${esc(r?r.note:it.raw.slice(0,90))}</small>
+      ${dup?`<div class="ibx-warn">⚠ เดือนนี้มีรายการประจำ 🔁 "${esc(dup.note)}" ยอดเท่ากันจดไว้แล้ว อาจซ้ำ</div>`:''}
+      <div class="ibx-act"><button type="button" data-ibact="drop" class="${ibxArm===it.id?'arm':''}">${ibxArm===it.id?'ยืนยันทิ้ง':'ทิ้ง'}</button><button type="button" class="go" data-ibact="take">จด</button></div></div>`}).join('');
+}
+$('ibxList').onclick=e=>{
+  const b=e.target.closest('[data-ibact]');if(!b)return;const id=b.closest('[data-ib]').dataset.ib;
+  if(b.dataset.ibact==='drop'){if(ibxArm===id){removeInbox(id);ibxArm=null;paintInbox();if(!inboxList().length)setTimeout(closeSheets,900)}else{ibxArm=id;paintInbox()}return}
+  const it=inboxList().find(x=>x.id===id);if(!it)return;
+  openSheet();fromInbox=id;$('repWrap').hidden=true;
+  const r=parseBank(it.raw);if(r&&!r.date)r.date=it.day;
+  if(!fillFromBank(r,it.raw,true)){$('fDate').value=it.day;$('fNote').value='';$('smsMsg').textContent='ข้อความ: '+it.raw.slice(0,120)}
+};
+$('ibxClose').onclick=closeSheets;$('inboxBar').onclick=openInbox;
+
 useLocal();
 (function(){ // opened by MacroDroid: ?sms=<message text>
   let q='';try{q=new URLSearchParams(location.search).get('sms')||''}catch(e){}
   if(!q)return;
   try{history.replaceState(null,'',location.pathname)}catch(e){}
-  openSheet();fillFromBank(parseBank(q),q);
+  const added=addInbox(q);
+  paintInboxBar();
+  if(added)toast('เก็บไว้ในกล่องรอจดแล้ว');else toast('ข้อความนี้รับไว้แล้ว');
+  openInbox();
 })();
+paintInboxBar();
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
 </body>
