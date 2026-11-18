@@ -146,7 +146,6 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .datebox{position:relative;display:flex;justify-content:space-between;align-items:center}
 .datebox .cal{font-size:12px;color:var(--accent)}
 .datebox input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0}
-.slip{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .inboxbar{display:flex;align-items:center;gap:10px;width:100%;border:1px solid var(--accent);background:var(--card);color:var(--ink);border-radius:14px;padding:10px 14px;font-weight:500;text-align:left}
 .inboxbar .n{background:var(--out);color:#fff;border-radius:999px;min-width:26px;height:26px;display:grid;place-items:center;font-size:14px;padding:0 6px}
 .inboxbar .go{margin-left:auto;color:var(--accent);font-size:14px}
@@ -163,13 +162,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .repeat{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
 .repeat select{max-width:220px}
 .rep-mark{font-size:12px;margin-left:4px}
-.smsbox{display:flex;flex-direction:column;gap:6px}
-.smsbox textarea{min-height:84px;resize:vertical;font:inherit;font-size:15px}
 .bankrow{display:grid;grid-template-columns:1fr 1.3fr;gap:8px;align-items:center;font-size:14px}
 .bankrow select{background:var(--card)}
-.slipbtn{border:1px dashed var(--accent);color:var(--accent);border-radius:12px;padding:9px 14px;font-weight:500;cursor:pointer}
-.slipbtn:focus-within{outline:2px solid var(--accent)}
-#slipMsg{font-size:13px;color:var(--muted)}
 .vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
 .topr{display:flex;align-items:center;gap:8px}
 .gear{border:1px solid var(--line);background:var(--card);width:40px;height:40px;border-radius:999px;display:grid;place-items:center;color:var(--muted)}
@@ -256,11 +250,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 <div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
   <form id="form" novalidate>
     <div class="brand"><img data-img="cheer" alt="" style="border-radius:0;object-fit:contain"><h2 id="sheetTitle">จดรายการใหม่</h2></div>
-    <div class="slip" id="slipRow" hidden><button type="button" class="slipbtn" id="slipBtn">อ่านจากสลิปธนาคาร</button><input type="file" id="fSlip" accept="image/*" class="vh" tabindex="-1" aria-hidden="true"><span id="slipMsg"></span></div>
-    <div class="smsbox">
-      <div class="slip"><button type="button" class="slipbtn" id="smsBtn">วางข้อความจากธนาคาร</button><span id="smsMsg" class="sublabel">คัดลอก SMS ธนาคาร แล้วกดปุ่มนี้</span></div>
-      <textarea class="txt" id="fSms" placeholder="วางข้อความ SMS หรือแจ้งเตือนจากธนาคารที่นี่" hidden></textarea>
-    </div>
+    <div class="sublabel" id="smsMsg" role="status" hidden></div>
     <div class="field"><span>กระเป๋า</span><div class="chips" id="fWallet"></div></div>
     <div class="seg" id="fType">
       <button type="button" data-v="out" aria-pressed="true">รายจ่าย</button>
@@ -537,7 +527,6 @@ $('main').onclick=async e=>{
 $('main').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('li[data-fk]')){e.preventDefault();pickFilter(e.target)}});
 
 /* ---------- entry sheet ---------- */
-const SLIP_HINT='เลือกรูปสลิป แอปจะกรอกจำนวนเงินและวันที่ให้';
 function paintForm(){
   if(!W(form.wallet))form.wallet=WALLETS[0].id;
   const w=W(form.wallet);if(!w.income)form.type='out';
@@ -550,9 +539,9 @@ function paintForm(){
   $('fCat').innerHTML=cats.map(c=>`<button type="button" data-c="${esc(c)}" aria-pressed="${c===form.cat}">${esc(c)}</button>`).join('');
 }
 function openSheet(){
-  closeSheets();editing=null;form.extraCat=null;$('sheetTitle').textContent='จดรายการใหม่';$('slipRow').hidden=!(canOCR||ask);
+  closeSheets();editing=null;form.extraCat=null;$('sheetTitle').textContent='จดรายการใหม่';
   form.wallet=state.tab==='all'?form.wallet:state.tab;form.cat=null;
-  $('fAmount').value='';$('fNote').value='';$('fDate').value=todayStr();$('fDate').min=cutoff();$('slipMsg').textContent=SLIP_HINT;$('fSms').value='';$('fSms').hidden=true;$('smsMsg').textContent='คัดลอก SMS ธนาคาร แล้วกดปุ่มนี้';$('fErr').textContent='';
+  $('fAmount').value='';$('fNote').value='';$('fDate').value=todayStr();$('fDate').min=cutoff();$('smsMsg').textContent='';$('smsMsg').hidden=true;$('fErr').textContent='';
   fromInbox=null;$('repWrap').hidden=false;$('fRep').checked=false;$('serDel').hidden=true;paintRepeat();
   paintForm();$('scrim').hidden=false;$('sheet').hidden=false;setTimeout(()=>$('fAmount').focus(),50);
 }
@@ -561,7 +550,7 @@ function openEdit(id){
   editing=t;closeSheets();
   form.wallet=t.wallet;form.type=t.type==='in'?'in':'out';form.cat=t.type==='in'?null:t.cat;
   form.extraCat=t.type==='in'?null:{w:t.wallet,c:t.cat};
-  $('sheetTitle').textContent='แก้ไขรายการ';$('slipRow').hidden=true;
+  $('sheetTitle').textContent='แก้ไขรายการ';$('smsMsg').hidden=true;
   $('fAmount').value=t.amount;$('fNote').value=t.note||'';$('fDate').value=t.date||todayStr();$('fDate').min=cutoff();$('fErr').textContent='';
   fromInbox=null;$('repWrap').hidden=true;$('fRep').checked=false;serArm=false;
   const rest=t.series?state.txs.filter(x=>x.series===t.series&&x.date>=t.date).length:0;
@@ -716,106 +705,6 @@ $('setSave').onclick=async()=>{
   catch(err){$('setErr').textContent='บันทึกไม่สำเร็จ ลองกดอีกครั้ง'}
 };
 
-/* ---------- read bank slip on this phone (Tesseract OCR) ---------- */
-let ask=null;
-const canOCR=typeof Worker!=='undefined'&&typeof WebAssembly!=='undefined';
-if(canOCR)$('slipRow').hidden=false;
-
-$('slipBtn').addEventListener('click',()=>{try{$('fSlip').click()}catch(e){}});
-document.addEventListener('paste',e=>{if($('sheet').hidden)return;const it=[...(e.clipboardData?.items||[])].find(i=>i.type.startsWith('image/'));if(it){e.preventDefault();readSlip(it.getAsFile())}});
-$('fSlip').addEventListener('change',()=>{const f=$('fSlip').files&&$('fSlip').files[0];if(f)readSlip(f)});
-
-let busy=false;
-async function readSlip(f){
-  if(!f||busy)return;busy=true;
-  try{
-    let r=null;
-    if(!r){r=await ocrSlip(f)}
-    fillFromSlip(r);
-  }catch(e){
-    $('slipMsg').textContent=e&&e.code==='rate_limited'?'อ่านสลิปถี่เกินไป รอสักครู่แล้วลองใหม่':'อ่านสลิปไม่สำเร็จในเครื่องนี้ กรอกเองได้เลย';
-  }finally{busy=false;$('fSlip').value=''}
-}
-function fillFromSlip(r){
-  if(r&&Number(r.amount)>0)$('fAmount').value=Number(r.amount);
-  if(r&&/^\d{4}-\d{2}-\d{2}$/.test(r.date||''))$('fDate').value=r.date;
-  if(r&&(r.direction==='in'||r.direction==='out')&&W(form.wallet).income)form.type=r.direction;
-  const who=r&&r.counterparty?((r.direction==='in'?'รับจาก ':'โอนให้ ')+r.counterparty):'';
-  if(!$('fNote').value.trim()&&(r&&(r.memo||who)))$('fNote').value=[r.memo,who].filter(Boolean).join(' · ').slice(0,120);
-  paintForm();
-  $('slipMsg').textContent=r&&Number(r.amount)>0
-    ?(r.ocr?'กรอกจำนวนเงินและวันที่ให้แล้ว ตรวจตัวเลขอีกครั้ง เลือกหมวดหมู่ ใส่ชื่อรายการ แล้วกดบันทึก':'กรอกให้แล้ว ตรวจตัวเลข เลือกหมวดหมู่ แล้วกดบันทึก')
-    :'อ่านจำนวนเงินไม่ออก ลองรูปที่ชัดกว่านี้ หรือกรอกเองได้เลย';
-}
-
-/* on-device OCR (Tesseract, runs in this browser; first use downloads ~5 MB) */
-const TJS='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/';
-let ocrWorker=null;
-function loadScript(src){return new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=()=>no(new Error('load'));document.head.appendChild(s)})}
-async function getOcr(){
-  if(ocrWorker)return ocrWorker;
-  ocrWorker=(async()=>{
-    if(!window.Tesseract)await loadScript(TJS+'tesseract.min.js');
-    $('slipMsg').textContent='กำลังเตรียมตัวอ่านสลิป (ครั้งแรกใช้เน็ตประมาณ 5 MB)…';
-    return Tesseract.createWorker(['tha','eng'],1,{
-      workerPath:TJS+'worker.min.js',
-      corePath:'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1',
-      langPath:new URL('.',location.href).href.replace(/\/$/,''),gzip:false,
-      logger:m=>{if(m.status==='recognizing text')$('slipMsg').textContent='กำลังอ่านสลิป… '+Math.round(m.progress*100)+'%';
-        else if(/load/i.test(m.status||''))$('slipMsg').textContent='กำลังเตรียมตัวอ่านสลิป (ครั้งแรกใช้เน็ตประมาณ 5 MB)…'}});
-  })();
-  try{return await ocrWorker}catch(e){ocrWorker=null;throw e}
-}
-async function shrink(f){
-  try{const bmp=await createImageBitmap(f);const sc=Math.min(1,1400/Math.max(bmp.width,bmp.height));
-    const c=document.createElement('canvas');c.width=Math.round(bmp.width*sc);c.height=Math.round(bmp.height*sc);
-    const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(bmp,0,0,c.width,c.height);return c}
-  catch(e){return f}
-}
-async function ocrSlip(f){
-  $('slipMsg').textContent='กำลังเตรียมตัวอ่านสลิป…';
-  const w=await getOcr();
-  const img=await shrink(f);
-  const {data}=await w.recognize(img);
-  const r=parseSlip(data&&data.text||'');r.ocr=true;return r;
-}
-function parseSlip(raw,today){
-  today=today||new Date();
-  let text=String(raw).replace(/[๐-๙]/g,d=>String('๐๑๒๓๔๕๖๗๘๙'.indexOf(d)));
-  const lines=text.split(/\n+/).map(l=>l.trim()).filter(Boolean);
-  const NUM=/\d{1,3}(?:[,，]\d{3})+(?:\.\d{2})?|\d+\.\d{2}/g;
-  const val=s=>parseFloat(s.replace(/[,，]/g,''));
-  let amount=0;
-  for(let i=0;i<lines.length&&!amount;i++){
-    if(/จำนวน|ยอดเงิน|ยอดโอน|amount/i.test(lines[i])&&!/ค่าธรรมเนียม|fee/i.test(lines[i])){
-      const m=(lines[i].match(NUM)||[]).concat(lines[i+1]?(lines[i+1].match(NUM)||[]):[]);
-      const v=m.map(val).find(x=>x>0);if(v)amount=v;
-    }
-  }
-  if(!amount){
-    const all=[];lines.forEach(l=>{if(/ค่าธรรมเนียม|fee|เลขที่|ref|รหัส/i.test(l))return;(l.match(NUM)||[]).forEach(s=>{const v=val(s);if(v>0&&v<1e7)all.push(v)})});
-    if(all.length)amount=Math.max(...all);
-  }
-  const TH={'มค':1,'กพ':2,'มีค':3,'เมย':4,'พค':5,'มิย':6,'กค':7,'สค':8,'กย':9,'ตค':10,'พย':11,'ธค':12,
-    'มกราคม':1,'กุมภาพันธ์':2,'มีนาคม':3,'เมษายน':4,'พฤษภาคม':5,'มิถุนายน':6,'กรกฎาคม':7,'สิงหาคม':8,'กันยายน':9,'ตุลาคม':10,'พฤศจิกายน':11,'ธันวาคม':12};
-  const EN={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
-  const ok=(y,m,d)=>{if(!(m>=1&&m<=12&&d>=1&&d<=31))return null;const dt=new Date(y,m-1,d);const diff=Math.abs(dt-today)/864e5;return diff<800?y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0'):null};
-  let date=null;
-  const re=/(\d{1,2})\s*([ก-๏a-zA-Z][ก-๏a-zA-Z.\s]{1,12}?)\s*(\d{4}|\d{2})(?!\d)/g;let m;
-  while(!date&&(m=re.exec(text))){
-    const tok=m[2].replace(/[.\s]/g,'');let mon=TH[tok],thai=!!mon;
-    if(!mon){const e=EN[tok.slice(0,3).toLowerCase()];if(e)mon=e}
-    if(!mon)continue;
-    let y=parseInt(m[3],10);
-    if(y<100)y=thai?y+2500:(y>=50&&y<=99?y+2500:2000+y);
-    if(y>2400)y-=543;
-    date=ok(y,mon,parseInt(m[1],10));
-  }
-  if(!date){const r2=/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4}|\d{2})(?!\d)/g;
-    while(!date&&(m=r2.exec(text))){let y=parseInt(m[3],10);if(y<100)y+=y>=50?2500:2000;if(y>2400)y-=543;date=ok(y,parseInt(m[2],10),parseInt(m[1],10))}}
-  return {amount,date};
-}
-render();
 /* ---------- bank SMS / notification text -> entry ---------- */
 function ymdFrom(y,m,d){y=+y;m=+m;d=+d;if(y<100)y=y>=50?2500+y:2000+y;if(y>2400)y-=543;
   if(!(m>=1&&m<=12&&d>=1&&d<=31))return '';return y+'-'+pad(m)+'-'+pad(d)}
@@ -855,7 +744,7 @@ function parseBank(raw){
   return r;
 }
 function fillFromBank(r,raw,skipSeen){
-  if(!r){$('smsMsg').textContent='อ่านข้อความนี้ไม่ออก ลองคัดลอกใหม่ทั้งข้อความ หรือกรอกเองได้เลย';return false}
+  if(!r){$('smsMsg').hidden=false;$('smsMsg').textContent='อ่านข้อความนี้ไม่ออก ลองคัดลอกใหม่ทั้งข้อความ หรือกรอกเองได้เลย';return false}
   const bankName=(BANKS.find(b=>b.id===r.bank)||{}).name||'ธนาคาร';
   const map=lsGet(LSB,{});if(map[r.bank]&&W(map[r.bank]))form.wallet=map[r.bank];
   form.type=r.type;if(!W(form.wallet).income&&r.type==='in'){const w2=WALLETS.find(w=>w.income);if(w2)form.wallet=w2.id}
@@ -867,14 +756,8 @@ function fillFromBank(r,raw,skipSeen){
   if(!skipSeen){const seen=lsGet(LSSEEN,[]);const key=String(raw).replace(/\s+/g,' ').trim();
   if(seen.includes(key))msg='⚠ ข้อความนี้เคยเปิดมาแล้ว ระวังจดซ้ำ · '+msg;
   else{seen.push(key);lsSet(LSSEEN,seen.slice(-60))}}
-  $('smsMsg').textContent=msg;return true;
+  $('smsMsg').textContent=msg;$('smsMsg').hidden=false;return true;
 }
-$('smsBtn').onclick=async()=>{
-  let txt='';try{if(navigator.clipboard&&navigator.clipboard.readText)txt=await navigator.clipboard.readText()}catch(e){}
-  if(txt&&parseBank(txt)){$('fSms').hidden=true;fillFromBank(parseBank(txt),txt);return}
-  $('fSms').hidden=false;$('fSms').focus();$('smsMsg').textContent='กดค้างในช่องด้านล่าง แล้วเลือก "วาง"';
-};
-$('fSms').addEventListener('input',()=>{const v=$('fSms').value;if(!v.trim())return;fillFromBank(parseBank(v),v)});
 
 /* ---------- monthly repeat ---------- */
 let fromInbox=null,serArm=false;
@@ -940,7 +823,7 @@ $('ibxList').onclick=e=>{
   const it=inboxList().find(x=>x.id===id);if(!it)return;
   openSheet();fromInbox=id;$('repWrap').hidden=true;
   const r=parseBank(it.raw);if(r&&!r.date)r.date=it.day;
-  if(!fillFromBank(r,it.raw,true)){$('fDate').value=it.day;$('fNote').value='';$('smsMsg').textContent='ข้อความ: '+it.raw.slice(0,120)}
+  if(!fillFromBank(r,it.raw,true)){$('fDate').value=it.day;$('fNote').value='';$('smsMsg').hidden=false;$('smsMsg').textContent='ข้อความ: '+it.raw.slice(0,120)}
 };
 $('ibxClose').onclick=closeSheets;$('inboxBar').onclick=openInbox;
 
