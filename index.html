@@ -725,6 +725,14 @@ function parseBank(raw){
       else if(/ถอน/.test(before))r.note='ถอนเงิน (ทหารไทย)';
       else r.note='เงินออก (ทหารไทย)'}
     if((m=t.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})\s*@/)))r.date=ymdFrom(m[3],m[2],m[1]);
+  }else if(/K\s*PLUS|กสิกร|KBank/i.test(t)||(/บัญชี\s*x/i.test(t)&&/จำนวนเงิน/.test(t))){
+    r.bank='kbank';
+    const am=t.match(/จำนวนเงิน\s*([\d,]+\.\d{2})/)||t.split(/คงเหลือ|ใช้ได้|ยอดเงินคงเหลือ/)[0].match(/([\d,]+\.\d{2})/);if(am)r.amount=num(am[1]);
+    r.type=/เงินเข้า|เงินโอนเข้า|รับโอน|รับเงิน|ฝากเงิน|โอนเข้า/.test(t)?'in':'out';
+    r.note=r.type==='in'?'เงินเข้า (กสิกร)':(/ชำระ|จ่ายบิล/.test(t)?'ชำระเงิน (กสิกร)':'โอน/ถอน (กสิกร)');
+    const TM={'มค':1,'กพ':2,'มีค':3,'เมย':4,'พค':5,'มิย':6,'กค':7,'สค':8,'กย':9,'ตค':10,'พย':11,'ธค':12};
+    if((m=t.match(/(\d{1,2})\s*([ก-๙.]{3,6})\s*(\d{2,4})(?!\d)/))){const mo=TM[m[2].replace(/\./g,'')];if(mo)r.date=ymdFrom(m[3],mo,m[1])}
+    if(!r.date&&(m=t.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/)))r.date=ymdFrom(m[3],m[2],m[1]);
   }else if(/รายการเงิน(ออก|เข้า)|SCB/i.test(t)){
     r.bank='scb';r.type=/รายการเงินเข้า|รับโอน|เงินเข้า/.test(t)?'in':'out';
     const am=t.match(/([\d,]+\.\d{2})\s*บาท/);if(am)r.amount=num(am[1]);
